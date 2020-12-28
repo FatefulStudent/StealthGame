@@ -70,7 +70,6 @@ protected:
 
 	// AActor overrides
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	void TryInteractingWith(AActor* OtherActor);
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	// ~AActor overrides
 	
@@ -78,6 +77,8 @@ protected:
 	virtual bool WantToInteract(IInteractiveInterface* Interactive) const override;
 	virtual void Interact(IInteractiveInterface* Interactive) override;
 	// ~IInteractorInterface overrides
+
+	void TryInteractingWith(AActor* OtherActor);
 	
 	// Called when objective is picked up.
 	void OnPickUpObjective();
