@@ -1,6 +1,6 @@
 #include "LaunchPad.h"
-#include "StealthCharacter.h"
 
+#include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -31,13 +31,13 @@ ALaunchPad::ALaunchPad()
 void ALaunchPad::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (auto StealthCharacter = Cast<AStealthCharacter>(OtherActor))
+	if (auto Character = Cast<ACharacter>(OtherActor))
 	{
 		FRotator LaunchDirection = GetActorRotation();
 		LaunchDirection.Pitch += LaunchPitchAngle;
 		
-		const FVector LaunchVelocity = LaunchDirection.Vector() * CharacterLaunchForce; 
-		StealthCharacter->LaunchCharacter(LaunchVelocity, true, true);
+		const FVector LaunchVelocity = LaunchDirection.Vector() * LaunchForce; 
+		Character->LaunchCharacter(LaunchVelocity, true, true);
 		
 		UGameplayStatics::SpawnEmitterAtLocation(this, LaunchEffect, GetActorLocation());
 	}
@@ -46,8 +46,8 @@ void ALaunchPad::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 		FRotator LaunchDirection = GetActorRotation();
 		LaunchDirection.Pitch += LaunchPitchAngle;
 		
-		const FVector LaunchImpulse = LaunchDirection.Vector() * PhysicsBodyLaunchForce;
-		OtherComp->AddImpulse(LaunchImpulse);
+		const FVector LaunchImpulse = LaunchDirection.Vector() * LaunchForce;
+		OtherComp->AddImpulse(LaunchImpulse, NAME_None, true);
 		
 		UGameplayStatics::SpawnEmitterAtLocation(this, LaunchEffect, GetActorLocation());
 	}

@@ -24,10 +24,7 @@ protected:
 	UBoxComponent* OverlapBoxComponent;
 
 	UPROPERTY(EditAnywhere, Category=LaunchParams)
-	float CharacterLaunchForce = 1500.0f;
-
-	UPROPERTY(EditAnywhere, Category=LaunchParams)
-	float PhysicsBodyLaunchForce = 100000.0f;
+	float LaunchForce = 1500.0f;
 
 	UPROPERTY(EditAnywhere, Category=LaunchParams)
 	float LaunchPitchAngle = 35.0f;
