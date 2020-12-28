@@ -13,8 +13,11 @@ class STEALTHGAME_API AExtractionZone : public AActor
 	GENERATED_BODY()
 	
 protected:
-	UPROPERTY(VisibleDefaultsOnly, Category = "Overlap")
+	UPROPERTY(VisibleDefaultsOnly, Category = "Collision")
 	UBoxComponent* OverlapBoxComponent;
+	
+	UPROPERTY(VisibleDefaultsOnly, Category = "Effects")
+	UDecalComponent* OverlapDecalComponent;
 	
 public:	
 	AExtractionZone();
