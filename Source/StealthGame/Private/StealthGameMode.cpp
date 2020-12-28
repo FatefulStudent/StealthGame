@@ -2,8 +2,7 @@
 
 #include "StealthGameMode.h"
 #include "StealthHUD.h"
-#include "StealthCharacter.h"
-#include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
 AStealthGameMode::AStealthGameMode()
 {
@@ -16,6 +15,28 @@ void AStealthGameMode::CompleteMission(APawn* InstigatorPawn)
 	if (IsValid(InstigatorPawn))
 	{
 		InstigatorPawn->DisableInput(nullptr);
+		
+		ChangeViewTargetOnMissionComplete(InstigatorPawn);
+		
 		OnMissionCompleted(InstigatorPawn);
 	}
 }
+
+void AStealthGameMode::ChangeViewTargetOnMissionComplete(APawn* InstigatorPawn) const
+{
+	if (!ViewTargetActorClass)
+		return;
+	
+	TArray<AActor*> ViewTargets;
+	UGameplayStatics::GetAllActorsOfClass(this, ViewTargetActorClass, ViewTargets);
+
+	if (ViewTargets.Num() > 0)
+	{
+		AActor* NewViewTarget = ViewTargets[0];
+		if (auto PC = Cast<APlayerController>(InstigatorPawn->Controller))
+		{
+			PC->SetViewTargetWithBlend(NewViewTarget, 0.5, EViewTargetBlendFunction::VTBlend_Cubic);
+		}
+	}
+}
+

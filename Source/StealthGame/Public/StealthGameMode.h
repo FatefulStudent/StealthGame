@@ -11,10 +11,15 @@ class AStealthGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(EditDefaultsOnly, Category=Extraction)
+	TSubclassOf<AActor> ViewTargetActorClass;
+	
 public:
 	AStealthGameMode();
-
+	
 	void CompleteMission(APawn* InstigatorPawn);
+	void ChangeViewTargetOnMissionComplete(APawn* InstigatorPawn) const;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
