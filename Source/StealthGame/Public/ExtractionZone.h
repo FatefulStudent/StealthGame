@@ -18,6 +18,9 @@ protected:
 	
 	UPROPERTY(VisibleDefaultsOnly, Category = "Effects")
 	UDecalComponent* OverlapDecalComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	USoundBase* ExtractionFailedSound;
 	
 public:	
 	AExtractionZone();
@@ -33,4 +36,5 @@ protected:
 	    const FHitResult & SweepResult);
 
 	void OnExtractionComplete(AStealthCharacter* StealthCharacter);
+	void OnExtractionFailed();
 };

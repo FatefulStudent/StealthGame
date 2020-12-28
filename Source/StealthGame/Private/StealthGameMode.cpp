@@ -10,3 +10,12 @@ AStealthGameMode::AStealthGameMode()
 	// use our custom HUD class
 	HUDClass = AStealthHUD::StaticClass();
 }
+
+void AStealthGameMode::CompleteMission(APawn* InstigatorPawn)
+{
+	if (IsValid(InstigatorPawn))
+	{
+		InstigatorPawn->DisableInput(nullptr);
+		OnMissionCompleted(InstigatorPawn);
+	}
+}

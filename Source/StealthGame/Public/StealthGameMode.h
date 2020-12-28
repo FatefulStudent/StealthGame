@@ -12,8 +12,13 @@ class AStealthGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-
 	AStealthGameMode();
+
+	void CompleteMission(APawn* InstigatorPawn);
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMissionCompleted(APawn* InstigatorPawn);
 };
 
 
