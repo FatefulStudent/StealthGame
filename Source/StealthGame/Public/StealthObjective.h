@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Interfaces/Interactive.h"
+
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
@@ -8,7 +10,7 @@
 class USphereComponent;
 
 UCLASS()
-class STEALTHGAME_API AStealthObjective : public AActor
+class STEALTHGAME_API AStealthObjective : public AActor, public IInteractiveInterface
 {
 	GENERATED_BODY()
 
@@ -28,14 +30,18 @@ protected:
 public:	
 	AStealthObjective();
 
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-
 	void StartPlayingStationaryEffects();
-	void OnPickUp() const;
 
 protected:
+	// AActor overrides
 	virtual void BeginPlay() override;
+	// ~AActor overrides
 
+	// IInteractiveInterface overrides
+	virtual bool IsAvailableForInteraction() const override;
+	virtual void OnSuccessfulInteraction() override;
+	// ~IInteractiveInterface overrides
+	
 private:	
 	UPROPERTY()
 	UParticleSystemComponent* CachedStationaryEffects;

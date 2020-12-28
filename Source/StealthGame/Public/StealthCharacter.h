@@ -2,8 +2,11 @@
 
 #pragma once
 
+#include "Interfaces/Interactor.h"
+
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
 #include "StealthCharacter.generated.h"
 
 class UInputComponent;
@@ -13,60 +16,76 @@ class AStealthProjectile;
 class USoundBase;
 class UAnimSequence;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogStealthCharacter, Log, All);
 
 UCLASS()
-class AStealthCharacter : public ACharacter
+class AStealthCharacter : public ACharacter, public IInteractorInterface
 {
 	GENERATED_BODY()
 
 protected:
 
-	/** Pawn mesh: 1st person view  */
+	// Pawn mesh: 1st person view.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mesh")
 	USkeletalMeshComponent* CharacterMeshComponent;
 
-	/** Gun mesh: 1st person view (seen only by self) */
+	// Gun mesh: 1st person view (seen only by self).
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	USkeletalMeshComponent* GunMeshComponent;
 
-	/** First person camera */
+	// First person camera.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComponent;
+	
+	// Whether our character carries an objective.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ObjectiveBehaviour")
+	bool bCarriesObjective = false;
 
-public:
-	AStealthCharacter();
-
-	/** Projectile class to spawn */
+	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category="Projectile")
 	TSubclassOf<AStealthProjectile> ProjectileClass;
 
-	/** Sound to play each time we fire */
-	UPROPERTY(EditDefaultsOnly, Category="Gameplay")
+	// Sound to play each time we fire.
+	UPROPERTY(EditDefaultsOnly, Category="Gun|Cocmetic")
 	USoundBase* FireSound;
 
-	/** AnimMontage to play each time we fire */
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
+	// AnimMontage to play each time we fire.
+	UPROPERTY(EditDefaultsOnly, Category = "Gun|Cocmetic")
 	UAnimSequence* FireAnimation;
 
-protected:
+public:
+	// Returns character mesh.
+	USkeletalMeshComponent* GetCharacterMesh() const { return CharacterMeshComponent; }
+
+	// Returns FirstPersonCameraComponent subobject.
+	UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComponent; }
 	
-	/** Fires a projectile. */
+	AStealthCharacter();
+
+	
+protected:
+
+	// AActor overrides
+	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	void TryInteractingWith(AActor* OtherActor);
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	// ~AActor overrides
+	
+	// IInteractorInterface overrides
+	virtual bool WantToInteract(IInteractiveInterface* Interactive) const override;
+	virtual void Interact(IInteractiveInterface* Interactive) override;
+	// ~IInteractorInterface overrides
+	
+	// Called when objective is picked up.
+	void OnPickUpObjective();
+	
+	// Fires a projectile.
 	void Fire();
 
-	/** Handles moving forward/backward */
+	// Handles moving forward/backward.
 	void MoveForward(float Val);
 
-	/** Handles strafing movement, left and right */
+	// Handles strafing movement, left and right.
 	void MoveRight(float Val);
-
-	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-
-public:
-	/** Returns Mesh1P subobject **/
-	USkeletalMeshComponent* GetMesh1P() const { return CharacterMeshComponent; }
-
-	/** Returns FirstPersonCameraComponent subobject **/
-	UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComponent; }
-
 };
 

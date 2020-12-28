@@ -8,7 +8,7 @@
 
 AStealthObjective::AStealthObjective()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -19,26 +19,13 @@ AStealthObjective::AStealthObjective()
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CollisionComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	CollisionComponent->SetGenerateOverlapEvents(true);
 	CollisionComponent->SetupAttachment(StaticMeshComponent);
-}
-
-void AStealthObjective::NotifyActorBeginOverlap(AActor* OtherActor)
-{
-	Super::NotifyActorBeginOverlap(OtherActor);
-
-	OnPickUp();
 }
 
 void AStealthObjective::StartPlayingStationaryEffects()
 {
 	CachedStationaryEffects = UGameplayStatics::SpawnEmitterAtLocation(this, StationaryEffect, GetActorLocation());
-}
-
-void AStealthObjective::OnPickUp() const
-{
-	CachedStationaryEffects->Deactivate();
-	
-	UGameplayStatics::SpawnEmitterAtLocation(this, PickupEffect, GetActorLocation());
 }
 
 // Called when the game starts or when spawned
@@ -47,6 +34,20 @@ void AStealthObjective::BeginPlay()
 	Super::BeginPlay();
 	
 	StartPlayingStationaryEffects();
+}
+
+bool AStealthObjective::IsAvailableForInteraction() const
+{
+	return !IsPendingKill();
+}
+
+void AStealthObjective::OnSuccessfulInteraction()
+{
+	CachedStationaryEffects->Deactivate();
+	
+	UGameplayStatics::SpawnEmitterAtLocation(this, PickupEffect, GetActorLocation());
+
+	Destroy();
 }
 
 

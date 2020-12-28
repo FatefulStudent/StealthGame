@@ -1,6 +1,7 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "StealthCharacter.h"
+#include "StealthObjective.h"
 #include "StealthProjectile.h"
 
 #include "Animation/AnimInstance.h"
@@ -9,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimSequence.h"
 
+DEFINE_LOG_CATEGORY(LogStealthCharacter);
 
 AStealthCharacter::AStealthCharacter()
 {
@@ -47,6 +49,81 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 }
 
+void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	TryInteractingWith(OtherActor);
+}
+
+void AStealthCharacter::TryInteractingWith(AActor* OtherActor)
+{
+	if (IInteractiveInterface* OverlappedInteractive = Cast<IInteractiveInterface>(OtherActor))
+	{
+		if (WantToInteract(OverlappedInteractive))
+		{
+			Interact(OverlappedInteractive);
+		}
+		else
+		{
+			UE_LOG(LogStealthCharacter,
+	            Log,
+	            TEXT("%s: Tried to interact with %s, but character didn't want to interact with it."),
+	            *GetName(),
+	            *OtherActor->GetName())
+		}
+	}
+	else
+	{
+		UE_LOG(LogStealthCharacter,
+            Log,
+            TEXT("%s: Overlapped with %s, but it was not an interactable."),
+            *GetName(),
+            *OtherActor->GetName())		
+	}
+	
+}
+
+bool AStealthCharacter::WantToInteract(IInteractiveInterface* Interactive) const
+{
+	return !bCarriesObjective;
+}
+
+void AStealthCharacter::Interact(IInteractiveInterface* Interactive)
+{
+	if (!ensureAlways(WantToInteract(Interactive)))
+		return;
+	
+	if (Interactive->IsAvailableForInteraction())
+	{
+		if (Cast<AStealthObjective>(Interactive))
+		{
+			OnPickUpObjective();
+			Interactive->OnSuccessfulInteraction();
+		}
+		else
+		{
+			UE_LOG(LogStealthCharacter,
+                Log,
+                TEXT("%s: Tried to interact with %s, but it was not an objective."),
+                *GetName(),
+                *Cast<UObject>(Interactive)->GetName())
+		}
+	}
+	else
+	{
+		UE_LOG(LogStealthCharacter,
+			Log,
+			TEXT("%s: Tried to interact with %s, but it was not available for interaction."),
+			*GetName(),
+			*Cast<UObject>(Interactive)->GetName())
+	}
+}
+
+void AStealthCharacter::OnPickUpObjective()
+{
+	bCarriesObjective = true;
+}
 
 void AStealthCharacter::Fire()
 {
@@ -54,16 +131,18 @@ void AStealthCharacter::Fire()
 	if (ProjectileClass)
 	{
 		// Grabs location from the mesh that must have a socket called "Muzzle" in his skeleton
-		FVector MuzzleLocation = GunMeshComponent->GetSocketLocation("Muzzle");
+		const FVector MuzzleLocation = GunMeshComponent->GetSocketLocation("Muzzle");
 		// Use controller rotation which is our view direction in first person
-		FRotator MuzzleRotation = GetControlRotation();
+		const FRotator& MuzzleRotation = GetControlRotation();
 
 		//Set Spawn Collision Handling Override
-		FActorSpawnParameters ActorSpawnParams;
-		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Owner = this;
+		SpawnParameters.Instigator = this;
+		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 		// spawn the projectile at the muzzle
-		GetWorld()->SpawnActor<AStealthProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, ActorSpawnParams);
+		GetWorld()->SpawnActor<AStealthProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParameters);
 	}
 
 	// try and play the sound if specified
