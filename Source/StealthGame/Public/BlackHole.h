@@ -18,16 +18,29 @@ protected:
 	
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category=Collision)
 	USphereComponent* DestructingSphereComponent;
-
+	
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category=Collision)
-	URadialForceComponent* AttractingRadialForceComponent;
+	USphereComponent* AttractingSphereComponent;
+
+	float DestructingSphereDefaultRadius = 100.0f;
+	float AttractingSphereDefaultRadius = 10000.0f;
+	float AttractingForce = -1000000.0f;
 	
 public:	
 	ABlackHole();
-
-protected:	
-	virtual void Tick(float DeltaTime) override;
-
+	virtual void Tick(float DeltaSeconds) override;
+	
 private:
-	void DestroyObjectsInDestructionSphere() const;
+
+	void ApplyRadialForceOnOverlappedComponents() const;
+	
+	UFUNCTION()
+	void OnDestructionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult & SweepResult);
+
+	
 };

@@ -1,41 +1,60 @@
 #include "BlackHole.h"
 
 #include "Components/SphereComponent.h"
-#include "PhysicsEngine/RadialForceComponent.h"
 
 ABlackHole::ABlackHole()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
 
+	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
+	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RootComponent = StaticMeshComponent;
+	
 	DestructingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DestructionSphere"));
+	DestructingSphereComponent->SetSphereRadius(DestructingSphereDefaultRadius);
 	DestructingSphereComponent->SetCollisionObjectType(ECC_WorldDynamic);
 	DestructingSphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	DestructingSphereComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
-	RootComponent = DestructingSphereComponent;
+	DestructingSphereComponent->SetGenerateOverlapEvents(true);
+	DestructingSphereComponent->SetupAttachment(StaticMeshComponent);
+
+	DestructingSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ABlackHole::OnDestructionSphereBeginOverlap);
 	
-	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
-	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	StaticMeshComponent->SetupAttachment(DestructingSphereComponent);
-	
-	AttractingRadialForceComponent = CreateDefaultSubobject<URadialForceComponent>(TEXT("AttractingForceComponnet"));
-	AttractingRadialForceComponent->SetupAttachment(DestructingSphereComponent);
+	AttractingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("AttractingSphereComponent"));
+	AttractingSphereComponent->SetSphereRadius(AttractingSphereDefaultRadius);
+	AttractingSphereComponent->SetCollisionObjectType(ECC_WorldDynamic);
+	AttractingSphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	AttractingSphereComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
+	AttractingSphereComponent->SetGenerateOverlapEvents(true);
+	AttractingSphereComponent->SetupAttachment(StaticMeshComponent);
 }
 
-void ABlackHole::Tick(float DeltaTime)
+void ABlackHole::Tick(float DeltaSeconds)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaSeconds);
 
-	DestroyObjectsInDestructionSphere();
+	ApplyRadialForceOnOverlappedComponents();
 }
 
-void ABlackHole::DestroyObjectsInDestructionSphere() const
+void ABlackHole::ApplyRadialForceOnOverlappedComponents() const
 {
-	TArray<AActor*> ActorsToDestroy;
-	DestructingSphereComponent->GetOverlappingActors(ActorsToDestroy);
-
-	for (AActor* ActorToDestroy : ActorsToDestroy)
+	TArray<UPrimitiveComponent*> AttractedComponents;
+	AttractingSphereComponent->GetOverlappingComponents(AttractedComponents);
+	
+	for (UPrimitiveComponent* AttractedComponent : AttractedComponents)
 	{
-		if (IsValid(ActorToDestroy))
-			ActorToDestroy->Destroy();
+		AttractedComponent->AddRadialForce(
+			GetActorLocation(),
+			AttractingSphereComponent->GetScaledSphereRadius(),
+			AttractingForce,
+			RIF_Linear);
 	}
+}
+
+void ABlackHole::OnDestructionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (IsValid(OtherActor))
+		OtherActor->Destroy();
 }
