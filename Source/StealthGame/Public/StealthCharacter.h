@@ -59,6 +59,9 @@ public:
 
 	// Returns FirstPersonCameraComponent subobject.
 	UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComponent; }
+
+	UFUNCTION(BlueprintCallable)
+	bool IsCarryingObjective() const { return bCarriesObjective; }
 	
 	AStealthCharacter();
 
