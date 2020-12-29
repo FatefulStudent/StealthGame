@@ -6,7 +6,7 @@
 
 AAIGuard::AAIGuard()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComponent"));
 	
@@ -27,6 +27,8 @@ void AAIGuard::OnSeePawn(APawn* Pawn)
 	if (!Pawn)
 		return;
 
+	ChangeState(EGuardState::Alerted);
+	
 	if (auto StealthGameMode = Cast<AStealthGameMode>(GetWorld()->GetAuthGameMode()))
 		StealthGameMode->CompleteMission(Pawn, false);
 	
@@ -45,18 +47,22 @@ void AAIGuard::LookAtNoiseDistraction(const FVector& Location)
 	const float DesiredYaw = FRotationMatrix::MakeFromX(TargetDirection).Rotator().Yaw;
 	const FRotator NewRotation { GetActorRotation().Pitch, DesiredYaw, GetActorRotation().Pitch };
 	SetActorRotation(NewRotation);
-
-	auto RevertToOriginalRotation = [this]() { SetActorRotation(OriginalRotation); };
 	
 	GetWorldTimerManager().SetTimer(
 		RevertToOriginalRotationTimerHandle,
-		RevertToOriginalRotation,
+		this,
+		&AAIGuard::RevertToOriginalRotation,
 		RevertToOriginalRotationTimer,
 		false);
 }
 
 void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation, float Volume)
 {
+	if (GuardState == EGuardState::Alerted)
+		return;
+	
+	ChangeState(EGuardState::Suspicious);
+	
 	LookAtNoiseDistraction(NoiseLocation);
 	
 	DrawDebugSphere(GetWorld(),
@@ -68,8 +74,21 @@ void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation,
 	    5.0f);
 }
 
-void AAIGuard::Tick(float DeltaTime)
+void AAIGuard::ChangeState(EGuardState NewState)
 {
-	Super::Tick(DeltaTime);
+	if (GuardState == NewState)
+		return;
 
+	GuardState = NewState;
+
+	OnStateChange(GuardState);
+}
+
+void AAIGuard::RevertToOriginalRotation()
+{
+	if (GuardState == EGuardState::Alerted)
+		return;
+
+	SetActorRotation(OriginalRotation);
+	ChangeState(EGuardState::Idle);
 }
