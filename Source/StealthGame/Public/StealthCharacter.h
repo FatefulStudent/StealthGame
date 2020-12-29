@@ -36,6 +36,9 @@ protected:
 	// First person camera.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComponent;
+
+	UPROPERTY(VisibleAnywhere, Category="AI")
+	UPawnNoiseEmitterComponent* NoiseEmitterComponent;
 	
 	// Whether our character carries an objective.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ObjectiveBehaviour")

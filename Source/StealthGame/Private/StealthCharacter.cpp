@@ -5,10 +5,12 @@
 #include "StealthProjectile.h"
 
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimSequence.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/PawnNoiseEmitterComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Animation/AnimSequence.h"
+
 
 DEFINE_LOG_CATEGORY(LogStealthCharacter);
 
@@ -31,6 +33,8 @@ AStealthCharacter::AStealthCharacter()
 	GunMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
 	GunMeshComponent->CastShadow = false;
 	GunMeshComponent->SetupAttachment(CharacterMeshComponent, "GripPoint");
+
+	NoiseEmitterComponent = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
 }
 
 
