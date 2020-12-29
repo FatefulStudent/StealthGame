@@ -32,12 +32,9 @@ protected:
 
 	UPROPERTY(EditInstanceOnly, Category=Patrolling)
 	TArray<ATargetPoint*> PatrollingTargetPoints;
-
-	UPROPERTY(EditDefaultsOnly, Category=Patrolling)
-	float PatrollingSpeed = 300.0f;
 	
 	UPROPERTY(EditDefaultsOnly, Category=Patrolling)
-	float AcceptanceRadius2D = 100.0f;
+	float AcceptanceRadius2D = 50.0f;
 
 public:
 	AAIGuard();
@@ -63,12 +60,11 @@ private:
 
 	UPROPERTY() ATargetPoint* CurrentTargetPoint;
 	int32 CurrentTargetPointIndex = INDEX_NONE;
-
+	
+	void StartMovingToOtherTargetPointIfNeeded();
 	void TryStartPatrolling();
 	void UpdateTargetPoint();
-	void TickPatrolling(float DeltaSeconds);
 	void RotateTowardsLocation(const FVector& Location);
-	void MoveTowardsLocation(const FVector& Location, float DeltaSeconds);
 	void LookAtNoiseDistraction(const FVector& Location);
 	void ChangeState(EGuardState NewState);
 	void RevertToOriginalRotation();

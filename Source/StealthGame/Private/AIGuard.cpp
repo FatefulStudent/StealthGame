@@ -2,6 +2,7 @@
 #include "StealthGameMode.h"
 
 #include "DrawDebugHelpers.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Engine/TargetPoint.h"
 #include "Perception/PawnSensingComponent.h"
 
@@ -37,7 +38,7 @@ void AAIGuard::Tick(float DeltaSeconds)
 
 	if (GuardState == EGuardState::Patrolling)
 	{
-		TickPatrolling(DeltaSeconds);
+		StartMovingToOtherTargetPointIfNeeded();
 	}
 }
 
@@ -45,6 +46,9 @@ void AAIGuard::ChangeState(EGuardState NewState)
 {
 	if (GuardState == NewState)
 		return;
+
+	if (GuardState == EGuardState::Patrolling)
+		GetController()->StopMovement();
 
 	GuardState = NewState;
 
@@ -88,6 +92,15 @@ void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation,
         5.0f);
 }
 
+void AAIGuard::StartMovingToOtherTargetPointIfNeeded()
+{
+	if (GetHorizontalDistanceTo(CurrentTargetPoint) <= AcceptanceRadius2D)
+	{
+		UpdateTargetPoint();
+		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), CurrentTargetPoint);
+	}
+}
+
 void AAIGuard::TryStartPatrolling()
 {
 	if (PatrollingTargetPoints.Num() > 0)
@@ -95,6 +108,7 @@ void AAIGuard::TryStartPatrolling()
 		ChangeState(EGuardState::Patrolling);
 		if (CurrentTargetPoint == nullptr)
 			UpdateTargetPoint();
+		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), CurrentTargetPoint);
 	}
 	else
 	{
@@ -113,43 +127,12 @@ void AAIGuard::UpdateTargetPoint()
 	CurrentTargetPoint = PatrollingTargetPoints[CurrentTargetPointIndex];
 }
 
-void AAIGuard::TickPatrolling(float DeltaSeconds)
-{
-	const float DistanceToTarget2D = GetHorizontalDistanceTo(CurrentTargetPoint);
-	if (DistanceToTarget2D <= AcceptanceRadius2D)
-	{
-		UpdateTargetPoint();
-		return;
-	}
-
-	RotateTowardsLocation(CurrentTargetPoint->GetActorLocation());
-	MoveTowardsLocation(CurrentTargetPoint->GetActorLocation(), DeltaSeconds);
-}
-
 void AAIGuard::RotateTowardsLocation(const FVector& Location)
 {
 	const FVector TargetDirection = Location - GetActorLocation();
 	const float DesiredYaw = FRotationMatrix::MakeFromX(TargetDirection).Rotator().Yaw;
 	const FRotator NewRotation { GetActorRotation().Pitch, DesiredYaw, GetActorRotation().Pitch };
 	SetActorRotation(NewRotation);
-}
-
-void AAIGuard::MoveTowardsLocation(const FVector& Location, float DeltaSeconds)
-{
-	const float MaxPossibleDistance = PatrollingSpeed * DeltaSeconds;
-	const FVector TargetDirection = Location - GetActorLocation();
-	if (TargetDirection.Size() < MaxPossibleDistance)
-	{
-		SetActorLocation(Location);
-		return;
-	}
-
-	const FVector TargetDirectionNormalized = TargetDirection.GetSafeNormal();
-	FVector LocationDelta = TargetDirectionNormalized * MaxPossibleDistance;
-	LocationDelta.Z = 0;
-	const FVector FinalLocation = GetActorLocation() + LocationDelta;
-	
-	SetActorLocation(FinalLocation);
 }
 
 void AAIGuard::LookAtNoiseDistraction(const FVector& Location)
