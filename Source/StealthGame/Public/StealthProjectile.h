@@ -26,10 +26,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	UProjectileMovementComponent* ProjectileMovement;
 
+	// Maximum available amount of dealt noises
+	UPROPERTY(EditDefaultsOnly, Category=Noise)
+	float MaxPossibleNoiseCount = 2;
+
 public:
-
 	AStealthProjectile();
-
+	
 	/** called when projectile hits something */
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
@@ -39,5 +42,11 @@ public:
 
 	/** Returns ProjectileMovement subobject **/
 	UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+
+private:
+	int32 DealtNoises = 0;
+
+	void MakeNoiseIfNecessary();
+	void AddImpulseToPhysicsBody(AActor* OtherActor, UPrimitiveComponent* OtherComp);
 };
 
