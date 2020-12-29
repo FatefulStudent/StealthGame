@@ -18,13 +18,10 @@ protected:
 public:
 	AStealthGameMode();
 	
-	void CompleteMission(APawn* InstigatorPawn);
+	void CompleteMission(APawn* InstigatorPawn, bool bSuccess);
 	void ChangeViewTargetOnMissionComplete(APawn* InstigatorPawn) const;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnMissionCompleted(APawn* InstigatorPawn);
+	void OnMissionCompleted(APawn* InstigatorPawn, bool bSuccess);
 };
-
-
-

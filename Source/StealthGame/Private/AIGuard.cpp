@@ -1,5 +1,5 @@
 #include "AIGuard.h"
-
+#include "StealthGameMode.h"
 
 #include "DrawDebugHelpers.h"
 #include "Perception/PawnSensingComponent.h"
@@ -26,6 +26,9 @@ void AAIGuard::OnSeePawn(APawn* Pawn)
 {
 	if (!Pawn)
 		return;
+
+	if (auto StealthGameMode = Cast<AStealthGameMode>(GetWorld()->GetAuthGameMode()))
+		StealthGameMode->CompleteMission(Pawn, false);
 	
 	DrawDebugSphere(GetWorld(),
 		Pawn->GetActorLocation(), 
@@ -54,7 +57,6 @@ void AAIGuard::LookAtNoiseDistraction(const FVector& Location)
 
 void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation, float Volume)
 {
-	if (!PawnSensingComponent->bSeePawns)
 	LookAtNoiseDistraction(NoiseLocation);
 	
 	DrawDebugSphere(GetWorld(),

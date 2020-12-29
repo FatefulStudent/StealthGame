@@ -10,7 +10,7 @@ AStealthGameMode::AStealthGameMode()
 	HUDClass = AStealthHUD::StaticClass();
 }
 
-void AStealthGameMode::CompleteMission(APawn* InstigatorPawn)
+void AStealthGameMode::CompleteMission(APawn* InstigatorPawn, bool bSuccess)
 {
 	if (IsValid(InstigatorPawn))
 	{
@@ -18,7 +18,7 @@ void AStealthGameMode::CompleteMission(APawn* InstigatorPawn)
 		
 		ChangeViewTargetOnMissionComplete(InstigatorPawn);
 		
-		OnMissionCompleted(InstigatorPawn);
+		OnMissionCompleted(InstigatorPawn, bSuccess);
 	}
 }
 

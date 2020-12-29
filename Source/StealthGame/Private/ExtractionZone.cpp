@@ -45,7 +45,7 @@ void AExtractionZone::OnExtractionComplete(AStealthCharacter* StealthCharacter)
 {
 	UE_LOG(LogStealthCharacter, Warning, TEXT("%s: Extraction Successful"), *StealthCharacter->GetName());
 	if (auto StealthGameMode = Cast<AStealthGameMode>(GetWorld()->GetAuthGameMode()))
-		StealthGameMode->CompleteMission(StealthCharacter);
+		StealthGameMode->CompleteMission(StealthCharacter, true);
 }
 
 void AExtractionZone::OnExtractionFailed()
