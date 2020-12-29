@@ -16,18 +16,24 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category=Perception)
 	UPawnSensingComponent* PawnSensingComponent;
 
+	UPROPERTY(EditDefaultsOnly, Category=Perception)
+	float RevertToOriginalRotationTimer = 3.0f;
+
 public:
 	AAIGuard();
 
 protected:
 	virtual void PostInitializeComponents() override;
+	virtual void Tick(float DeltaTime) override;
 	
 	UFUNCTION()
     void OnSeePawn(APawn* Pawn);
-	
-	UFUNCTION()
-    void OnHearNoise(APawn* NoiseInstigator, const FVector& Location, float Volume);
+	void LookAtNoiseDistraction(const FVector& Location);
 
-public:	
-	virtual void Tick(float DeltaTime) override;
+	UFUNCTION()
+    void OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation, float Volume);
+
+private:
+	FRotator OriginalRotation;
+	FTimerHandle RevertToOriginalRotationTimerHandle;
 };

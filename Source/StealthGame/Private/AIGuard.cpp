@@ -18,6 +18,8 @@ void AAIGuard::PostInitializeComponents()
 
 	PawnSensingComponent->OnSeePawn.AddDynamic(this, &AAIGuard::OnSeePawn);
 	PawnSensingComponent->OnHearNoise.AddDynamic(this, &AAIGuard::OnHearNoise);
+
+	OriginalRotation = GetActorRotation();
 }
 
 void AAIGuard::OnSeePawn(APawn* Pawn)
@@ -34,10 +36,29 @@ void AAIGuard::OnSeePawn(APawn* Pawn)
 		5.0f);
 }
 
-void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& Location, float Volume)
+void AAIGuard::LookAtNoiseDistraction(const FVector& Location)
 {
+	const FVector TargetDirection = Location - GetActorLocation();
+	const float DesiredYaw = FRotationMatrix::MakeFromX(TargetDirection).Rotator().Yaw;
+	const FRotator NewRotation { GetActorRotation().Pitch, DesiredYaw, GetActorRotation().Pitch };
+	SetActorRotation(NewRotation);
+
+	auto RevertToOriginalRotation = [this]() { SetActorRotation(OriginalRotation); };
+	
+	GetWorldTimerManager().SetTimer(
+		RevertToOriginalRotationTimerHandle,
+		RevertToOriginalRotation,
+		RevertToOriginalRotationTimer,
+		false);
+}
+
+void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation, float Volume)
+{
+	if (!PawnSensingComponent->bSeePawns)
+	LookAtNoiseDistraction(NoiseLocation);
+	
 	DrawDebugSphere(GetWorld(),
-	    Location, 
+	    NoiseLocation,
 	    32.0f,
 	    10,
 	    FColor::Green,
