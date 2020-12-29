@@ -28,6 +28,7 @@ protected:
 	
 public:	
 	ABlackHole();
+	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaSeconds) override;
 	
 private:

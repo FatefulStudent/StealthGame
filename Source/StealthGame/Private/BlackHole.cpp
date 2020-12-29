@@ -10,7 +10,7 @@ ABlackHole::ABlackHole()
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RootComponent = StaticMeshComponent;
-	
+
 	DestructingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("DestructionSphere"));
 	DestructingSphereComponent->SetSphereRadius(DestructingSphereDefaultRadius);
 	DestructingSphereComponent->SetCollisionObjectType(ECC_WorldDynamic);
@@ -19,8 +19,6 @@ ABlackHole::ABlackHole()
 	DestructingSphereComponent->SetGenerateOverlapEvents(true);
 	DestructingSphereComponent->SetupAttachment(StaticMeshComponent);
 
-	DestructingSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ABlackHole::OnDestructionSphereBeginOverlap);
-	
 	AttractingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("AttractingSphereComponent"));
 	AttractingSphereComponent->SetSphereRadius(AttractingSphereDefaultRadius);
 	AttractingSphereComponent->SetCollisionObjectType(ECC_WorldDynamic);
@@ -28,6 +26,13 @@ ABlackHole::ABlackHole()
 	AttractingSphereComponent->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
 	AttractingSphereComponent->SetGenerateOverlapEvents(true);
 	AttractingSphereComponent->SetupAttachment(StaticMeshComponent);
+}
+
+void ABlackHole::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	DestructingSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ABlackHole::OnDestructionSphereBeginOverlap);
 }
 
 void ABlackHole::Tick(float DeltaSeconds)
