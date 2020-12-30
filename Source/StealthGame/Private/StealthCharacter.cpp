@@ -1,9 +1,11 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "StealthCharacter.h"
+#include "NetworkingHelper.h"
 #include "StealthObjective.h"
 #include "StealthProjectile.h"
 
+#include "GeneratedCodeHelpers.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequence.h"
 #include "Camera/CameraComponent.h"
@@ -16,6 +18,9 @@ DEFINE_LOG_CATEGORY(LogStealthCharacter);
 
 AStealthCharacter::AStealthCharacter()
 {
+	SetReplicates(true);
+	SetReplicateMovement(true);
+	
 	// Create a CameraComponent	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	CameraComponent->SetupAttachment(GetCapsuleComponent());
@@ -26,6 +31,7 @@ AStealthCharacter::AStealthCharacter()
 	CharacterMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
 	CharacterMeshComponent->SetupAttachment(CameraComponent);
 	CharacterMeshComponent->CastShadow = false;
+	CharacterMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	CharacterMeshComponent->SetRelativeRotation(FRotator(2.0f, -15.0f, 5.0f));
 	CharacterMeshComponent->SetRelativeLocation(FVector(0, 0, -160.0f));
 
@@ -35,6 +41,15 @@ AStealthCharacter::AStealthCharacter()
 	GunMeshComponent->SetupAttachment(CharacterMeshComponent, "GripPoint");
 
 	NoiseEmitterComponent = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
+}
+
+void AStealthCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// Interaction happens only on server
+	if (!HasAuthority())
+		GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 }
 
 
@@ -57,11 +72,21 @@ void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	TryInteractingWith(OtherActor);
+	if (ensureAlways(HasAuthority()))
+		TryInteractingWith(OtherActor);
+}
+
+void AStealthCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AStealthCharacter, bCarriesObjective);
 }
 
 void AStealthCharacter::TryInteractingWith(AActor* OtherActor)
 {
+	check(HasAuthority());
+	
 	if (IInteractiveInterface* OverlappedInteractive = Cast<IInteractiveInterface>(OtherActor))
 	{
 		if (WantToInteract(OverlappedInteractive))
@@ -95,6 +120,8 @@ bool AStealthCharacter::WantToInteract(IInteractiveInterface* Interactive) const
 
 void AStealthCharacter::Interact(IInteractiveInterface* Interactive)
 {
+	check(HasAuthority());
+	
 	if (!ensureAlways(WantToInteract(Interactive)))
 		return;
 	
@@ -129,8 +156,20 @@ void AStealthCharacter::OnPickUpObjective()
 	bCarriesObjective = true;
 }
 
-void AStealthCharacter::Fire()
+void AStealthCharacter::ServerFireProjectile_Implementation()
 {
+	Fire();
+}
+
+bool AStealthCharacter::ServerFireProjectile_Validate()
+{
+	return true;
+}
+
+void AStealthCharacter::SpawnProjectile()
+{
+	check(HasAuthority());
+	
 	// try and fire a projectile
 	if (ProjectileClass)
 	{
@@ -148,7 +187,10 @@ void AStealthCharacter::Fire()
 		// spawn the projectile at the muzzle
 		GetWorld()->SpawnActor<AStealthProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParameters);
 	}
+}
 
+void AStealthCharacter::PlayEffectsOnProjectileSpawn() const
+{
 	// try and play the sound if specified
 	if (FireSound)
 	{
@@ -165,6 +207,18 @@ void AStealthCharacter::Fire()
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(FireAnimation, "Arms", 0.0f);
 		}
 	}
+}
+
+void AStealthCharacter::Fire()
+{
+	if (HasAuthority())
+		SpawnProjectile();
+	else if (FNetworkingHelper::IsAutonomousClient(this))
+		ServerFireProjectile();
+		
+
+	if (FNetworkingHelper::HasCosmetics())
+		PlayEffectsOnProjectileSpawn();
 }
 
 

@@ -41,7 +41,7 @@ protected:
 	UPawnNoiseEmitterComponent* NoiseEmitterComponent;
 	
 	// Whether our character carries an objective.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ObjectiveBehaviour")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "ObjectiveBehaviour")
 	bool bCarriesObjective = false;
 
 	// Projectile class to spawn.
@@ -72,22 +72,35 @@ public:
 protected:
 
 	// AActor overrides
+	virtual void PostInitializeComponents() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	virtual void GetLifetimeReplicatedProps (TArray <FLifetimeProperty> & OutLifetimeProps) const override;
 	// ~AActor overrides
 	
 	// IInteractorInterface overrides
 	virtual bool WantToInteract(IInteractiveInterface* Interactive) const override;
+
+	// Server-Only: interacts with interactable: picks up the objective
 	virtual void Interact(IInteractiveInterface* Interactive) override;
 	// ~IInteractorInterface overrides
 
+	// Server-only: Trying to interact with whatever object we overlapped with
 	void TryInteractingWith(AActor* OtherActor);
 	
-	// Called when objective is picked up.
+	// Server-only: Called when objective is picked up.
 	void OnPickUpObjective();
+
+	UFUNCTION(Server, WithValidation, Reliable)
+	void ServerFireProjectile();
 	
 	// Fires a projectile.
 	void Fire();
+
+	// Server-only: spawn a projectile after firing
+	void SpawnProjectile();
+	// Cosmetics-only: spawns effects that happen on projectile spawn
+	void PlayEffectsOnProjectileSpawn() const;
 
 	// Handles moving forward/backward.
 	void MoveForward(float Val);

@@ -20,17 +20,12 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category=Collision)
 	USphereComponent* CollisionComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Effects)
-	UParticleSystem* PickupEffect;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Effects)
 	UParticleSystem* StationaryEffect;
 	
 public:	
 	AStealthObjective();
-
-	void StartPlayingStationaryEffects();
 
 protected:
 	// AActor overrides
@@ -41,6 +36,9 @@ protected:
 	virtual bool IsAvailableForInteraction() const override;
 	virtual void OnSuccessfulInteraction() override;
 	// ~IInteractiveInterface overrides
+	
+	// Cosmetics-only: spawns stationary emitter
+	void StartPlayingStationaryEffects();
 	
 private:	
 	UPROPERTY()

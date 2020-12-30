@@ -1,4 +1,5 @@
 #include "StealthObjective.h"
+#include "NetworkingHelper.h"
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -9,6 +10,8 @@
 AStealthObjective::AStealthObjective()
 {
 	PrimaryActorTick.bCanEverTick = false;
+
+	SetReplicates(true);
 
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -23,17 +26,12 @@ AStealthObjective::AStealthObjective()
 	CollisionComponent->SetupAttachment(StaticMeshComponent);
 }
 
-void AStealthObjective::StartPlayingStationaryEffects()
-{
-	CachedStationaryEffects = UGameplayStatics::SpawnEmitterAtLocation(this, StationaryEffect, GetActorLocation());
-}
-
-// Called when the game starts or when spawned
 void AStealthObjective::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	StartPlayingStationaryEffects();
+
+	if (FNetworkingHelper::HasCosmetics())
+		StartPlayingStationaryEffects();
 }
 
 bool AStealthObjective::IsAvailableForInteraction() const
@@ -43,11 +41,16 @@ bool AStealthObjective::IsAvailableForInteraction() const
 
 void AStealthObjective::OnSuccessfulInteraction()
 {
-	CachedStationaryEffects->Deactivate();
-	
-	UGameplayStatics::SpawnEmitterAtLocation(this, PickupEffect, GetActorLocation());
+	check(HasAuthority());
 
+	CachedStationaryEffects->DestroyComponent();
+	
 	Destroy();
 }
 
-
+void AStealthObjective::StartPlayingStationaryEffects()
+{
+	check(FNetworkingHelper::HasCosmetics());
+	
+	CachedStationaryEffects = UGameplayStatics::SpawnEmitterAtLocation(this, StationaryEffect, GetActorLocation());
+}
