@@ -1,7 +1,9 @@
 #include "AIGuard.h"
 #include "StealthGameMode.h"
+#include "NetworkingHelper.h"
 
 #include "DrawDebugHelpers.h"
+#include "GeneratedCodeHelpers.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Engine/TargetPoint.h"
 #include "Perception/PawnSensingComponent.h"
@@ -19,17 +21,25 @@ void AAIGuard::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	PawnSensingComponent->OnSeePawn.AddDynamic(this, &AAIGuard::OnSeePawn);
-	PawnSensingComponent->OnHearNoise.AddDynamic(this, &AAIGuard::OnHearNoise);
+	if (HasAuthority())
+	{
+		PawnSensingComponent->OnSeePawn.AddDynamic(this, &AAIGuard::OnSeePawn);
+		PawnSensingComponent->OnHearNoise.AddDynamic(this, &AAIGuard::OnHearNoise);
 
-	OriginalRotation = GetActorRotation();
+		OriginalRotation = GetActorRotation();
+	}
+	else
+	{
+		SetActorTickEnabled(false);
+	}
 }
 
 void AAIGuard::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TryStartPatrolling();
+	if (HasAuthority())
+		TryStartPatrolling();
 }
 
 void AAIGuard::Tick(float DeltaSeconds)
@@ -42,8 +52,17 @@ void AAIGuard::Tick(float DeltaSeconds)
 	}
 }
 
+void AAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AAIGuard, GuardState);
+}
+
 void AAIGuard::ChangeState(EGuardState NewState)
 {
+	check(HasAuthority())
+	
 	if (GuardState == NewState)
 		return;
 
@@ -52,11 +71,13 @@ void AAIGuard::ChangeState(EGuardState NewState)
 
 	GuardState = NewState;
 
-	OnStateChange(GuardState);
+	OnRep_GuardState();
 }
 
 void AAIGuard::OnSeePawn(APawn* Pawn)
 {
+	check(HasAuthority());
+	
 	if (!Pawn)
 		return;
 
@@ -76,6 +97,8 @@ void AAIGuard::OnSeePawn(APawn* Pawn)
 
 void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation, float Volume)
 {
+	check(HasAuthority());
+	
 	if (GuardState == EGuardState::Alerted)
 		return;
 	
@@ -94,6 +117,8 @@ void AAIGuard::OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation,
 
 void AAIGuard::StartMovingToOtherTargetPointIfNeeded()
 {
+	check(HasAuthority());
+	
 	if (GetHorizontalDistanceTo(CurrentTargetPoint) <= AcceptanceRadius2D)
 	{
 		UpdateTargetPoint();
@@ -103,6 +128,8 @@ void AAIGuard::StartMovingToOtherTargetPointIfNeeded()
 
 void AAIGuard::TryStartPatrolling()
 {
+	check(HasAuthority());
+	
 	if (PatrollingTargetPoints.Num() > 0)
 	{
 		ChangeState(EGuardState::Patrolling);
@@ -119,6 +146,8 @@ void AAIGuard::TryStartPatrolling()
 
 void AAIGuard::UpdateTargetPoint()
 {
+	check(HasAuthority());
+	
 	CurrentTargetPointIndex = FMath::Max(0, CurrentTargetPointIndex+1);
 	
 	if (CurrentTargetPointIndex > PatrollingTargetPoints.Num() - 1)
@@ -129,6 +158,8 @@ void AAIGuard::UpdateTargetPoint()
 
 void AAIGuard::RotateTowardsLocation(const FVector& Location)
 {
+	check(HasAuthority());
+	
 	const FVector TargetDirection = Location - GetActorLocation();
 	const float DesiredYaw = FRotationMatrix::MakeFromX(TargetDirection).Rotator().Yaw;
 	const FRotator NewRotation { GetActorRotation().Pitch, DesiredYaw, GetActorRotation().Pitch };
@@ -137,6 +168,8 @@ void AAIGuard::RotateTowardsLocation(const FVector& Location)
 
 void AAIGuard::LookAtNoiseDistraction(const FVector& Location)
 {
+	check(HasAuthority());
+	
 	RotateTowardsLocation(Location);
 	
 	GetWorldTimerManager().SetTimer(
@@ -153,4 +186,10 @@ void AAIGuard::RevertToOriginalRotation()
 		return;
 	
 	TryStartPatrolling();
+}
+
+void AAIGuard::OnRep_GuardState()
+{
+	if (FNetworkingHelper::HasCosmetics())
+		OnStateChange(GuardState);
 }

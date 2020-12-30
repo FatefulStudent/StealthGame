@@ -40,10 +40,13 @@ public:
 	AAIGuard();
 
 protected:
+	// AActor overrides
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
-
+	virtual void GetLifetimeReplicatedProps (TArray <FLifetimeProperty> & OutLifetimeProps) const override;
+	// ~AActor overrides
+		
 	UFUNCTION(BlueprintImplementableEvent, Category="StateChange")
     void OnStateChange(EGuardState NewState);
 	
@@ -54,7 +57,9 @@ protected:
     void OnHearNoise(APawn* NoiseInstigator, const FVector& NoiseLocation, float Volume);
 
 private:
+	UPROPERTY(ReplicatedUsing=OnRep_GuardState)
 	EGuardState GuardState = EGuardState::Idle;
+	
 	FRotator OriginalRotation = FRotator::ZeroRotator;
 	FTimerHandle RevertToOriginalRotationTimerHandle;
 
@@ -69,4 +74,6 @@ private:
 	void ChangeState(EGuardState NewState);
 	void RevertToOriginalRotation();
 
+	UFUNCTION()
+	void OnRep_GuardState();
 };
