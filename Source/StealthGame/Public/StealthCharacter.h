@@ -74,6 +74,7 @@ protected:
 	// AActor overrides
 	virtual void PostInitializeComponents() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void GetLifetimeReplicatedProps (TArray <FLifetimeProperty> & OutLifetimeProps) const override;
 	// ~AActor overrides
@@ -92,13 +93,18 @@ protected:
 	void OnPickUpObjective();
 
 	UFUNCTION(Server, WithValidation, Reliable)
-	void ServerFireProjectile();
+	void ServerSpawnProjectileAndEffects();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticastPlayEffectsOnProjectileSpawn();
 	
 	// Fires a projectile.
 	void Fire();
 
 	// Server-only: spawn a projectile after firing
 	void SpawnProjectile();
+	// Server-only: spawns a projectile and multicasts effects
+	void SpawnProjectileAndEffects();
 	// Cosmetics-only: spawns effects that happen on projectile spawn
 	void PlayEffectsOnProjectileSpawn() const;
 

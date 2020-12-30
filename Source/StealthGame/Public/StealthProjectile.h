@@ -26,10 +26,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	UProjectileMovementComponent* ProjectileMovement;
 
-	// Maximum available amount of dealt noises
-	UPROPERTY(EditDefaultsOnly, Category=Noise)
-	float MaxPossibleNoiseCount = 2;
-
 public:
 	AStealthProjectile();
 	
@@ -44,9 +40,6 @@ public:
 	UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 
 private:
-	int32 DealtNoises = 0;
-
-	void MakeNoiseIfNecessary();
 	void AddImpulseToPhysicsBody(AActor* OtherActor, UPrimitiveComponent* OtherComp);
 };
 

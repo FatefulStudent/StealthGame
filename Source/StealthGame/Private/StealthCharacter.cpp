@@ -20,6 +20,9 @@ AStealthCharacter::AStealthCharacter()
 {
 	SetReplicates(true);
 	SetReplicateMovement(true);
+
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 	
 	// Create a CameraComponent	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
@@ -49,7 +52,15 @@ void AStealthCharacter::PostInitializeComponents()
 
 	// Interaction happens only on server
 	if (!HasAuthority())
+	{
 		GetCapsuleComponent()->SetGenerateOverlapEvents(false);
+	}
+
+	// For non locally controlled we need to use tick
+	if (!IsLocallyControlled())
+	{
+		SetActorTickEnabled(true);
+	}
 }
 
 
@@ -66,6 +77,16 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+}
+
+void AStealthCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	ensure(!IsLocallyControlled());
+
+	CameraComponent->SetWorldRotation(GetBaseAimRotation());
+	
 }
 
 void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -156,20 +177,18 @@ void AStealthCharacter::OnPickUpObjective()
 	bCarriesObjective = true;
 }
 
-void AStealthCharacter::ServerFireProjectile_Implementation()
+void AStealthCharacter::ServerSpawnProjectileAndEffects_Implementation()
 {
-	Fire();
+	SpawnProjectileAndEffects();
 }
 
-bool AStealthCharacter::ServerFireProjectile_Validate()
+bool AStealthCharacter::ServerSpawnProjectileAndEffects_Validate()
 {
 	return true;
 }
 
 void AStealthCharacter::SpawnProjectile()
 {
-	check(HasAuthority());
-	
 	// try and fire a projectile
 	if (ProjectileClass)
 	{
@@ -187,6 +206,15 @@ void AStealthCharacter::SpawnProjectile()
 		// spawn the projectile at the muzzle
 		GetWorld()->SpawnActor<AStealthProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParameters);
 	}
+}
+
+void AStealthCharacter::SpawnProjectileAndEffects()
+{
+	check(HasAuthority());
+	
+	SpawnProjectile();
+
+	NetMulticastPlayEffectsOnProjectileSpawn();
 }
 
 void AStealthCharacter::PlayEffectsOnProjectileSpawn() const
@@ -209,16 +237,18 @@ void AStealthCharacter::PlayEffectsOnProjectileSpawn() const
 	}
 }
 
+void AStealthCharacter::NetMulticastPlayEffectsOnProjectileSpawn_Implementation()
+{
+	if (FNetworkingHelper::HasCosmetics())
+		PlayEffectsOnProjectileSpawn();
+}
+
 void AStealthCharacter::Fire()
 {
 	if (HasAuthority())
-		SpawnProjectile();
+		SpawnProjectileAndEffects();
 	else if (FNetworkingHelper::IsAutonomousClient(this))
-		ServerFireProjectile();
-		
-
-	if (FNetworkingHelper::HasCosmetics())
-		PlayEffectsOnProjectileSpawn();
+		ServerSpawnProjectileAndEffects();
 }
 
 

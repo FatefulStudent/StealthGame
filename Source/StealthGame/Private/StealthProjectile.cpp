@@ -37,17 +37,12 @@ AStealthProjectile::AStealthProjectile()
 
 void AStealthProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	MakeNoiseIfNecessary();
-	
 	AddImpulseToPhysicsBody(OtherActor, OtherComp);
-}
-
-void AStealthProjectile::MakeNoiseIfNecessary()
-{
-	if (DealtNoises < MaxPossibleNoiseCount)
+	
+	if (HasAuthority())
 	{
 		MakeNoise(1.0f, GetInstigator());
-		DealtNoises++;
+		Destroy();
 	}
 }
 
@@ -57,7 +52,5 @@ void AStealthProjectile::AddImpulseToPhysicsBody(AActor* OtherActor, UPrimitiveC
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL) && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
-
-		Destroy();
 	}
 }
