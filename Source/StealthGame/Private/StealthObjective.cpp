@@ -34,6 +34,13 @@ void AStealthObjective::BeginPlay()
 		StartPlayingStationaryEffects();
 }
 
+void AStealthObjective::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (EndPlayReason == EEndPlayReason::Destroyed)
+		CachedStationaryEffects->DestroyComponent();
+	
+}
+
 bool AStealthObjective::IsAvailableForInteraction() const
 {
 	return !IsPendingKill();
@@ -43,8 +50,6 @@ void AStealthObjective::OnSuccessfulInteraction()
 {
 	check(HasAuthority());
 
-	CachedStationaryEffects->DestroyComponent();
-	
 	Destroy();
 }
 

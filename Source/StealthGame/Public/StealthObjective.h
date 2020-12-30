@@ -30,6 +30,7 @@ public:
 protected:
 	// AActor overrides
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	// ~AActor overrides
 
 	// IInteractiveInterface overrides
