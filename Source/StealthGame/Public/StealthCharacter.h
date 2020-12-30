@@ -65,9 +65,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsCarryingObjective() const { return bCarriesObjective; }
-	
-	AStealthCharacter();
 
+	AStealthCharacter();
+	
+	void PlaySoundOnAutonomousClients(USoundBase* SoundToPlay);
+	UFUNCTION(Client, Unreliable)
+	void ClientPlaySound(USoundBase* SoundToPlay);
 	
 protected:
 

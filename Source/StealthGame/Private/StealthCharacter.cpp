@@ -46,6 +46,19 @@ AStealthCharacter::AStealthCharacter()
 	NoiseEmitterComponent = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
 }
 
+void AStealthCharacter::PlaySoundOnAutonomousClients(USoundBase* SoundToPlay)
+{
+	if (IsLocallyControlled())
+		UGameplayStatics::PlaySound2D(this, SoundToPlay);
+	else
+		ClientPlaySound(SoundToPlay);
+}
+
+void AStealthCharacter::ClientPlaySound_Implementation(USoundBase* SoundToPlay)
+{
+	UGameplayStatics::PlaySound2D(this, SoundToPlay);
+}
+
 void AStealthCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();

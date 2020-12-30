@@ -24,9 +24,10 @@ protected:
 	
 public:	
 	AExtractionZone();
+	virtual void PostInitializeComponents() override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	
 protected:
 	void OnExtractionComplete(AStealthCharacter* StealthCharacter);
-	void OnExtractionFailed();
+	void OnExtractionFailed(AStealthCharacter* StealthCharacter);
 };

@@ -1,4 +1,5 @@
 #include "ExtractionZone.h"
+#include "NetworkingHelper.h"
 #include "StealthCharacter.h"
 #include "StealthGameMode.h"
 
@@ -8,7 +9,8 @@
 
 AExtractionZone::AExtractionZone()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	SetReplicates(true);
 	
 	OverlapBoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBoxContent"));
 	OverlapBoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -26,8 +28,18 @@ AExtractionZone::AExtractionZone()
 	OverlapDecalComponent->SetupAttachment(OverlapBoxComponent);
 }
 
+void AExtractionZone::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (!HasAuthority())
+		OverlapBoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
 void AExtractionZone::NotifyActorBeginOverlap(AActor* OtherActor)
 {
+	check(HasAuthority())
+	
 	if (auto StealthCharacter = Cast<AStealthCharacter>(OtherActor))
 	{
 		if (StealthCharacter->IsCarryingObjective())
@@ -36,20 +48,25 @@ void AExtractionZone::NotifyActorBeginOverlap(AActor* OtherActor)
 		}
 		else
 		{
-			OnExtractionFailed();
+			OnExtractionFailed(StealthCharacter);
 		}
 	}
 }
 
 void AExtractionZone::OnExtractionComplete(AStealthCharacter* StealthCharacter)
 {
+	check(HasAuthority())
+	
 	UE_LOG(LogStealthCharacter, Warning, TEXT("%s: Extraction Successful"), *StealthCharacter->GetName());
 	if (auto StealthGameMode = Cast<AStealthGameMode>(GetWorld()->GetAuthGameMode()))
 		StealthGameMode->CompleteMission(StealthCharacter, true);
 }
 
-void AExtractionZone::OnExtractionFailed()
+void AExtractionZone::OnExtractionFailed(AStealthCharacter* StealthCharacter)
 {
+	check(HasAuthority())
+	
 	UE_LOG(LogStealthCharacter, Warning, TEXT("Overlapped with extraction, but no objective"));
-	UGameplayStatics::PlaySound2D(this, ExtractionFailedSound);
+
+	StealthCharacter->PlaySoundOnAutonomousClients(ExtractionFailedSound);
 }
