@@ -30,15 +30,16 @@ void AStealthObjective::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (FNetworkingHelper::HasCosmetics())
+	if (FNetworkingHelper::HasCosmetics(this))
 		StartPlayingStationaryEffects();
 }
 
 void AStealthObjective::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (EndPlayReason == EEndPlayReason::Destroyed)
+	Super::EndPlay(EndPlayReason);
+
+	if (FNetworkingHelper::HasCosmetics(this) && EndPlayReason == EEndPlayReason::Destroyed)
 		CachedStationaryEffects->DestroyComponent();
-	
 }
 
 bool AStealthObjective::IsAvailableForInteraction() const
@@ -55,7 +56,7 @@ void AStealthObjective::OnSuccessfulInteraction()
 
 void AStealthObjective::StartPlayingStationaryEffects()
 {
-	check(FNetworkingHelper::HasCosmetics());
+	check(FNetworkingHelper::HasCosmetics(this));
 	
 	CachedStationaryEffects = UGameplayStatics::SpawnEmitterAtLocation(this, StationaryEffect, GetActorLocation());
 }

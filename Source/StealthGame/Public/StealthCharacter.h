@@ -74,6 +74,7 @@ protected:
 	// AActor overrides
 	virtual void PostInitializeComponents() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void GetLifetimeReplicatedProps (TArray <FLifetimeProperty> & OutLifetimeProps) const override;

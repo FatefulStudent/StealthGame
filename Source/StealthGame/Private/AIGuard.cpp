@@ -190,6 +190,6 @@ void AAIGuard::RevertToOriginalRotation()
 
 void AAIGuard::OnRep_GuardState()
 {
-	if (FNetworkingHelper::HasCosmetics())
+	if (FNetworkingHelper::HasCosmetics(this))
 		OnStateChange(GuardState);
 }

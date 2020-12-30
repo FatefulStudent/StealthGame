@@ -55,12 +55,6 @@ void AStealthCharacter::PostInitializeComponents()
 	{
 		GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 	}
-
-	// For non locally controlled we need to use tick
-	if (!IsLocallyControlled())
-	{
-		SetActorTickEnabled(true);
-	}
 }
 
 
@@ -79,6 +73,21 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 }
 
+void AStealthCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// For non locally controlled we need to use tick
+	if (!IsLocallyControlled())
+	{
+		SetActorTickEnabled(true);
+	}
+	else
+	{
+		SetActorTickEnabled(false);
+	}
+}
+
 void AStealthCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -86,7 +95,6 @@ void AStealthCharacter::Tick(float DeltaSeconds)
 	ensure(!IsLocallyControlled());
 
 	CameraComponent->SetWorldRotation(GetBaseAimRotation());
-	
 }
 
 void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -239,7 +247,7 @@ void AStealthCharacter::PlayEffectsOnProjectileSpawn() const
 
 void AStealthCharacter::NetMulticastPlayEffectsOnProjectileSpawn_Implementation()
 {
-	if (FNetworkingHelper::HasCosmetics())
+	if (FNetworkingHelper::HasCosmetics(this))
 		PlayEffectsOnProjectileSpawn();
 }
 

@@ -1,8 +1,8 @@
 #include "NetworkingHelper.h"
 
-bool FNetworkingHelper::HasCosmetics()
+bool FNetworkingHelper::HasCosmetics(AActor* Actor)
 {
-	return !IsRunningDedicatedServer();
+	return Actor->GetNetMode() != NM_DedicatedServer;
 }
 
 bool FNetworkingHelper::IsAutonomousClient(AActor* Actor)
