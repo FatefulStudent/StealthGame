@@ -1,25 +1,32 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "StealthGameMode.h"
+#include "StealthGameState.h"
 #include "StealthHUD.h"
+
 #include "Kismet/GameplayStatics.h"
 
 AStealthGameMode::AStealthGameMode()
 {
-	// use our custom HUD class
 	HUDClass = AStealthHUD::StaticClass();
+	GameStateClass = AStealthGameState::StaticClass();
 }
 
 void AStealthGameMode::CompleteMission(APawn* InstigatorPawn, bool bSuccess)
 {
 	if (IsValid(InstigatorPawn))
 	{
-		InstigatorPawn->DisableInput(nullptr);
-		
 		ChangeViewTargetOnMissionComplete(InstigatorPawn);
 		
 		OnMissionCompleted(InstigatorPawn, bSuccess);
 	}
+
+	AStealthGameState* GS = GetGameState<AStealthGameState>();
+	if (GS)
+	{
+		GS->NetMulticastCompleteMission(InstigatorPawn, bSuccess);
+	}
+	
 }
 
 void AStealthGameMode::ChangeViewTargetOnMissionComplete(APawn* InstigatorPawn) const
