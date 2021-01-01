@@ -12,38 +12,47 @@ AStealthGameMode::AStealthGameMode()
 	GameStateClass = AStealthGameState::StaticClass();
 }
 
-void AStealthGameMode::CompleteMission(APawn* InstigatorPawn, bool bSuccess)
+void AStealthGameMode::CompleteMission(bool bSuccess)
 {
-	if (IsValid(InstigatorPawn))
-	{
-		ChangeViewTargetOnMissionComplete(InstigatorPawn);
-		
-		OnMissionCompleted(InstigatorPawn, bSuccess);
-	}
+	ChangeViewTargetOnMissionComplete();
 
 	AStealthGameState* GS = GetGameState<AStealthGameState>();
 	if (GS)
 	{
-		GS->NetMulticastCompleteMission(InstigatorPawn, bSuccess);
+		GS->NetMulticastCompleteMission(bSuccess);
 	}
 	
 }
 
-void AStealthGameMode::ChangeViewTargetOnMissionComplete(APawn* InstigatorPawn) const
+void AStealthGameMode::ChangeViewTargetOnMissionComplete() const
+{
+	AActor* NewViewTarget = GetViewTarget();
+	
+	SetNewViewTargetForAllPlayerControllers(NewViewTarget);
+}
+
+AActor* AStealthGameMode::GetViewTarget() const
 {
 	if (!ViewTargetActorClass)
-		return;
+		return nullptr;
 	
 	TArray<AActor*> ViewTargets;
 	UGameplayStatics::GetAllActorsOfClass(this, ViewTargetActorClass, ViewTargets);
 
 	if (ViewTargets.Num() > 0)
-	{
-		AActor* NewViewTarget = ViewTargets[0];
-		if (auto PC = Cast<APlayerController>(InstigatorPawn->Controller))
-		{
-			PC->SetViewTargetWithBlend(NewViewTarget, 0.5, EViewTargetBlendFunction::VTBlend_Cubic);
-		}
-	}
+		return ViewTargets[0];
+	
+	
+	return nullptr;
 }
 
+void AStealthGameMode::SetNewViewTargetForAllPlayerControllers(AActor* NewViewTarget) const
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get())
+		{
+			PC->SetViewTargetWithBlend(NewViewTarget, 0.5, EViewTargetBlendFunction::VTBlend_Cubic);
+		}	
+	}
+}

@@ -84,7 +84,7 @@ void AAIGuard::OnSeePawn(APawn* Pawn)
 	ChangeState(EGuardState::Alerted);
 	
 	if (auto StealthGameMode = Cast<AStealthGameMode>(GetWorld()->GetAuthGameMode()))
-		StealthGameMode->CompleteMission(Pawn, false);
+		StealthGameMode->CompleteMission(false);
 	
 	DrawDebugSphere(GetWorld(),
 		Pawn->GetActorLocation(), 

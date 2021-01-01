@@ -16,5 +16,8 @@ class STEALTHGAME_API AStealthGameState : public AGameStateBase
 	
 public:
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticastCompleteMission(APawn* InstigatorPawn, bool bSuccess);
+	void NetMulticastCompleteMission(bool bSuccess);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMissionCompleted(bool bSuccess);
 };

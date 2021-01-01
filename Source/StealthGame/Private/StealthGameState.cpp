@@ -3,7 +3,7 @@
 
 #include "StealthGameState.h"
 
-void AStealthGameState::NetMulticastCompleteMission_Implementation(APawn* InstigatorPawn, bool bSuccess)
+void AStealthGameState::NetMulticastCompleteMission_Implementation(bool bSuccess)
 {
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
@@ -14,4 +14,6 @@ void AStealthGameState::NetMulticastCompleteMission_Implementation(APawn* Instig
 				Pawn->DisableInput(nullptr);
 		}	
 	}
+
+	OnMissionCompleted(bSuccess);
 }

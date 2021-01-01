@@ -1,5 +1,4 @@
 #include "ExtractionZone.h"
-#include "NetworkingHelper.h"
 #include "StealthCharacter.h"
 #include "StealthGameMode.h"
 
@@ -59,7 +58,7 @@ void AExtractionZone::OnExtractionComplete(AStealthCharacter* StealthCharacter)
 	
 	UE_LOG(LogStealthCharacter, Warning, TEXT("%s: Extraction Successful"), *StealthCharacter->GetName());
 	if (auto StealthGameMode = Cast<AStealthGameMode>(GetWorld()->GetAuthGameMode()))
-		StealthGameMode->CompleteMission(StealthCharacter, true);
+		StealthGameMode->CompleteMission(true);
 }
 
 void AExtractionZone::OnExtractionFailed(AStealthCharacter* StealthCharacter)
