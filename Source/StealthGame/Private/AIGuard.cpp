@@ -17,9 +17,9 @@ AAIGuard::AAIGuard()
 	
 }
 
-void AAIGuard::PostInitializeComponents()
+void AAIGuard::BeginPlay()
 {
-	Super::PostInitializeComponents();
+	Super::BeginPlay();
 
 	if (HasAuthority())
 	{
@@ -27,19 +27,13 @@ void AAIGuard::PostInitializeComponents()
 		PawnSensingComponent->OnHearNoise.AddDynamic(this, &AAIGuard::OnHearNoise);
 
 		OriginalRotation = GetActorRotation();
+
+		TryStartPatrolling();
 	}
 	else
 	{
 		SetActorTickEnabled(false);
 	}
-}
-
-void AAIGuard::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (HasAuthority())
-		TryStartPatrolling();
 }
 
 void AAIGuard::Tick(float DeltaSeconds)
